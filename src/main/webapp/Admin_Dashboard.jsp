@@ -1,98 +1,201 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@page import="java.util.List"%>
+<%@page import="com.event.dto.Event"%>
+<%@page import="com.event.dao.EventDAOImpl"%>
+<%@page import="com.event.dao.UserDAOImpl"%>
+<%@page import="com.event.dto.User"%>
+<%@ page contentType="text/html;charset=UTF-8" %>
+
+<%
+    User admin = (User) session.getAttribute("currentUser");
+    if (admin == null || !"admin".equalsIgnoreCase(admin.getRole())) {
+        session.setAttribute("login-error", "Please login as Admin");
+        response.sendRedirect("Login.jsp");
+        return;
+    }
+
+    EventDAOImpl evdao = new EventDAOImpl();
+    List<Event> pendingEvents  = evdao.getEventsByStatus("pending");
+    List<Event> allEvents      = evdao.getAllEvents();
+
+    UserDAOImpl udao = new UserDAOImpl();
+    List<User> users = udao.getAllUsers();
+%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EventHive - Admin Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Admin Panel | EventHive</title>
 
-    <style>
-        body{ background:#eef1f6; }
-        .stats-card {
-            background:white;
-            border-radius:12px;
-            padding:20px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.1);
-            text-align:center;
-            font-weight: bold;
-        }
-        .pending-card {
-            padding:18px;
-            background:white;
-            border-radius:10px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.1);
-        }
-    </style>
+    <%@ include file="component/allcss.jsp" %>
+
+    <!-- Updated CSS -->
+    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/AdminDashboard.css?v=<%=System.currentTimeMillis()%>">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
-<div class="container mt-4">
 
-    <h2 class="mb-4">Admin Dashboard</h2>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="logo">⚙ Admin Panel</div>
+    <ul>
+        <li class="active" onclick="switchTab('dashboardTab', this)"><i class="fa-solid fa-gauge-high"></i> Dashboard</li>
+        <li onclick="switchTab('eventsTab', this)"><i class="fa-solid fa-calendar-check"></i> Events</li>
+        <li onclick="switchTab('usersTab', this)"><i class="fa-solid fa-users"></i> Users</li>
+        <li onclick="switchTab('settingsTab', this)"><i class="fa-solid fa-gear"></i> Settings</li>
 
-    <!-- STATS -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
-                Total Events<br><span style="font-size:28px;">120</span>
-            </div>
+        <li class="logout">
+            <a href="LogoutServlet"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </li>
+    </ul>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="content">
+
+    <h2>Welcome, <%= admin.getUsername() %> 👑</h2>
+    <p class="text" style="color: white;">Manage users, approve events, and control access.</p>
+    
+
+    <!-- DASHBOARD TAB -->
+    <!-- DASHBOARD TAB -->
+<section id="dashboardTab" class="section show-section fadeIn">
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+            <h3><%= allEvents.size() %></h3>
+            <p>Total Events</p>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                Organizers<br><span style="font-size:28px;">34</span>
-            </div>
+
+        <div class="stat-card yellow">
+            <h3><%= pendingEvents.size() %></h3>
+            <p>Pending Approval</p>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                Customers<br><span style="font-size:28px;">520</span>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                Revenue<br><span style="font-size:28px;">₹6,25,000</span>
-            </div>
+
+        <div class="stat-card purple">
+            <h3><%= users.size() %></h3>
+            <p>Total Users</p>
         </div>
     </div>
 
-    <!-- PENDING APPROVALS -->
-    <h4 class="mb-3">Pending Event Approvals</h4>
-    <div class="pending-card mb-3">
-        <h5>Tech Innovators 2025</h5>
-        <p>Organizer: John Events</p>
-        <a href="#" class="btn btn-success btn-sm">Approve</a>
-        <a href="#" class="btn btn-danger btn-sm">Reject</a>
+
+    <!-- WIDGET SECTION BELOW CARDS -->
+    <div class="dashboard-widgets">
+
+        <!-- Pending Notification -->
+        <div class="alert-box">
+            <i class="fa-solid fa-bell"></i>
+            <span><strong><%= pendingEvents.size() %></strong> event(s) require approval.</span>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card-modern">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h5>
+            <ul class="activity-list">
+
+                <% if(pendingEvents.size() > 0) { %>
+                <li>
+                    <span>⏳ New event submitted: <b><%= pendingEvents.get(0).getEventName() %></b></span>
+                    <span class="time">Just now</span>
+                </li>
+                <% } %>
+
+                <li><span>✔ Admin logged in</span><span class="time">Today</span></li>
+                <li><span>📌 Backup Completed</span><span class="time">Yesterday</span></li>
+            </ul>
+        </div>
+
+        <!-- Latest Users -->
+        <div class="card-modern">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-user-plus"></i> Recent Users</h5>
+            <table class="mini-table">
+                <tr><th>Name</th><th>Role</th></tr>
+                <% for(int i=0; i<users.size() && i<3; i++) { User u = users.get(i); %>
+                <tr>
+                    <td><%= u.getUsername() %></td>
+                    <td><%= u.getRole() %></td>
+                </tr>
+                <% } %>
+            </table>
+        </div>
+
     </div>
 
-    <div class="pending-card mb-3">
-        <h5>Music Fiesta</h5>
-        <p>Organizer: Wave Studio</p>
-        <a href="#" class="btn btn-success btn-sm">Approve</a>
-        <a href="#" class="btn btn-danger btn-sm">Reject</a>
-    </div>
+</section>
+    
 
-    <!-- USER MANAGEMENT -->
-    <h4 class="mt-4 mb-3">User Management</h4>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="stats-card">
-                <h5>View Organizers</h5>
-                <a href="#" class="btn btn-primary btn-sm">Open</a>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stats-card">
-                <h5>View Customers</h5>
-                <a href="#" class="btn btn-primary btn-sm">Open</a>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stats-card">
-                <h5>All Events</h5>
-                <a href="#" class="btn btn-primary btn-sm">Open</a>
-            </div>
-        </div>
-    </div>
+    <!-- EVENTS TAB -->
+    <section id="eventsTab" class="section fadeIn d-none">
+        <h4>Pending Events</h4>
+        <table class="glass-table">
+            <tr>
+                <th>ID</th><th>Event</th><th>Category</th><th>Date</th><th>Cost</th><th>Action</th>
+            </tr>
 
-</div>
+            <% for(Event e : pendingEvents) { %>
+            <tr>
+                <td><%= e.getEventId() %></td>
+                <td><%= e.getEventName() %></td>
+                <td><%= e.getCategory() %></td>
+                <td><%= e.getEventDate() %></td>
+                <td>₹<%= e.getCost() %></td>
+                <td>
+                    <a class="btn-approve" href="AdminEventAction?action=approve&eid=<%= e.getEventId() %>">Approve</a>
+                    <a class="btn-reject" href="AdminEventAction?action=reject&eid=<%= e.getEventId() %>">Reject</a>
+                </td>
+            </tr>
+            <% } %>
+        </table>
+    </section>
+
+    <!-- USERS TAB -->
+    <section id="usersTab" class="section fadeIn d-none">
+        <h4>Users List</h4>
+        <table class="glass-table">
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+
+            <% for(User u : users) { %>
+            <tr>
+                <td><%= u.getUserId() %></td>
+                <td><%= u.getUsername() %></td>
+                <td><%= u.getEmail() %></td>
+                <td><%= u.getRole() %></td>
+
+                <td>
+                    <a href="AdminUserAction?action=delete&uid=<%= u.getUserId() %>" class="btn-delete">Delete</a>
+                    <a href="AdminUserAction?action=block&uid=<%= u.getUserId() %>" class="btn-block">Block</a>
+                    <a href="AdminUserAction?action=unblock&uid=<%= u.getUserId() %>" class="btn-unblock">Unblock</a>
+                </td>
+            </tr>
+            <% } %>
+        </table>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settingsTab" class="section fadeIn d-none">
+        <h4>⚙ Settings</h4>
+        <p>Coming soon...</p>
+    </section>
+
+</main>
+
+<script>
+function switchTab(tabId, element){
+    document.querySelectorAll('.section').forEach(s => s.classList.add('d-none'));
+    document.getElementById(tabId).classList.remove('d-none');
+
+    document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+    element.classList.add("active");
+}
+</script>
+
 </body>
 </html>

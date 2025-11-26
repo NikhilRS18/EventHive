@@ -1,0 +1,15 @@
+@charset "UTF-8";
+
+/* Reuse global vars from allcss.jsp: my-bg-color, btn-modern, card-modern, etc. */
+
+body {
+    background: #f4f6f9;
+    font-family: 'Poppins', sans-serif;
+}
+
+.customer-hero {
+    background: white;
+    border-radius: 18px;
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}

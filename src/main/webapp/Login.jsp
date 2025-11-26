@@ -53,7 +53,7 @@
 
     <p class="mt-3 text-center">
         Don't have an account?  
-        <a href="register.jsp">Register</a>
+        <a href="Register.jsp">Register</a>
     </p>
 </div>
 

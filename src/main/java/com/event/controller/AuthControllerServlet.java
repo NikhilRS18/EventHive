@@ -73,7 +73,7 @@ public class AuthControllerServlet extends HttpServlet {
 	            } else if ("organizer".equalsIgnoreCase(role)) {
 	                resp.sendRedirect("OrganizerDashboard.jsp");
 	            } else if ("customer".equalsIgnoreCase(role)) {
-	                resp.sendRedirect("UserDashboard.jsp");
+	                resp.sendRedirect("Customer_Dashboard.jsp");
 	            } else {
 	                resp.sendRedirect("index.jsp");
 	            }

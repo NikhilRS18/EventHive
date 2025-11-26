@@ -199,6 +199,121 @@ public class EventDAOImpl implements EventDAO {
 
 	    return list;
 	}
+
+	@Override
+	public List<Event> getApprovedEvents() {
+
+	    List<Event> list = new ArrayList<>();
+	    con = DBConnection.ProvideConnection();
+
+	    String sql = "SELECT * FROM events WHERE status='approved' ORDER BY created_at DESC";
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ResultSet rs = ps.executeQuery();
+	        while (rs.next()) {
+	            Event e = new Event();
+	            e.setEventId(rs.getInt("event_id"));
+	            e.setEventName(rs.getString("event_name"));
+	            e.setCategory(rs.getString("category"));
+	            e.setLocation(rs.getString("location"));
+	            e.setCost(rs.getInt("cost"));
+	            e.setEventDate(rs.getDate("event_date"));
+	            e.setImageUrl(rs.getString("image_url"));
+	            list.add(e);
+	        }
+
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	    }
+
+	    return list;
+	}
+
+
+	@Override
+	public List<Event> getApprovedEventsByCategory(String category) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Event> searchApprovedEvents(String keyword, String location, String category) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Event> getEventsByStatus(String status) {
+	    List<Event> list = new ArrayList<>();
+	    con = DBConnection.ProvideConnection();
+
+	    String sql = "SELECT * FROM events WHERE status = ? ORDER BY created_at DESC";
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, status);
+	        ResultSet rs = ps.executeQuery();
+	        while (rs.next()) {
+	            Event e = new Event();
+	            e.setEventId(rs.getInt("event_id"));
+	            e.setOrganizerId(rs.getInt("organizer_id"));
+	            e.setEventName(rs.getString("event_name"));
+	            e.setCategory(rs.getString("category"));
+	            e.setLocation(rs.getString("location"));
+	            e.setEventDate(rs.getDate("event_date"));
+	            e.setCost(rs.getInt("cost"));
+	            e.setImageUrl(rs.getString("image_url"));
+	            e.setStatus(rs.getString("status"));
+	            list.add(e);
+	        }
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	    }
+	    return list;
+	}
+
+	@Override
+	public List<Event> getAllEvents() {
+	    List<Event> list = new ArrayList<>();
+	    con = DBConnection.ProvideConnection();
+
+	    String sql = "SELECT * FROM events ORDER BY created_at DESC";
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ResultSet rs = ps.executeQuery();
+	        while (rs.next()) {
+	            Event e = new Event();
+	            e.setEventId(rs.getInt("event_id"));
+	            e.setOrganizerId(rs.getInt("organizer_id"));
+	            e.setEventName(rs.getString("event_name"));
+	            e.setCategory(rs.getString("category"));
+	            e.setLocation(rs.getString("location"));
+	            e.setEventDate(rs.getDate("event_date"));
+	            e.setCost(rs.getInt("cost"));
+	            e.setImageUrl(rs.getString("image_url"));
+	            e.setStatus(rs.getString("status"));
+	            list.add(e);
+	        }
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	    }
+	    return list;
+	}
+
+	@Override
+	public boolean updateEventStatus(int eventId, String status) {
+	    con = DBConnection.ProvideConnection();
+	    String sql = "UPDATE events SET status=? WHERE event_id=?";
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, status);
+	        ps.setInt(2, eventId);
+	        return ps.executeUpdate() > 0;
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
 	
 
 }

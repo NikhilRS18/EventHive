@@ -1,86 +1,120 @@
+<%@page import="com.event.dto.User"%>
 <%@page import="com.event.dto.Event"%>
-<%@ page contentType="text/html;charset=UTF-8"%>
+<%@page import="com.event.dao.EventDAOImpl"%>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%
-    Event e = (Event) request.getAttribute("event");
-    if (e == null) {
-        response.sendRedirect("OrganizerDashboard.jsp");
+    String idStr = request.getParameter("eid");
+    if(idStr == null){
+        response.sendRedirect("Customer_Dashboard.jsp");
         return;
     }
+
+    int eventId = Integer.parseInt(idStr);
+
+    EventDAOImpl evdao = new EventDAOImpl();
+    Event event = evdao.getEventById(eventId);
+
+    if(event == null){
+        response.sendRedirect("Customer_Dashboard.jsp?err=notfound");
+        return;
+    }
+
+    User user = (User) session.getAttribute("currentUser");
+    boolean loggedIn = (user != null);
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>View Event | EventHive</title>
+    <title><%= event.getEventName() %> | EventHive</title>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <%@ include file="component/allcss.jsp" %>
+    <link rel="stylesheet" href="css/viewEvent.css">
 
-<style>
-    body { background:#f4f6f9; }
-
-    .view-box {
-        max-width: 800px;
-        margin: 50px auto;
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 6px 30px rgba(0,0,0,0.1);
-    }
-
-    .event-img {
-        width:100%;
-        height:300px;
-        border-radius:12px;
-        object-fit:cover;
-    }
-
-    .badge-status {
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-</style>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
 
-<div class="view-box">
+<nav class="navbar navbar-dark my-bg-color">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="Customer_Dashboard.jsp">⬅ Back</a>
+        <span class="text-white">Viewing Event</span>
+    </div>
+</nav>
 
-    <img src="<%= e.getImageUrl() %>" class="event-img">
+<div class="container mt-4 mb-5">
 
-    <h2 class="mt-3"><%= e.getEventName() %></h2>
+    <div class="row">
 
-    <!-- STATUS BADGE -->
-    <%
-        String status = e.getStatus();
-        String color = "#ffcc00";
-        if ("approved".equals(status)) color = "#28a745";
-        else if ("rejected".equals(status)) color = "#dc3545";
-    %>
-    <span class="badge-status" style="background:<%= color %>; color:white;">
-        <%= status.substring(0,1).toUpperCase() + status.substring(1) %>
-    </span>
+        <!-- Left large event image -->
+        <div class="col-md-6">
+            <img src="<%= event.getImageUrl() %>" class="event-img">
+        </div>
 
-    <hr>
+        <!-- Right side data -->
+        <div class="col-md-6">
 
-    <p><b>Category:</b> <%= e.getCategory() %></p>
-    <p><b>Location:</b> <%= e.getLocation() %></p>
-    <p><b>Date:</b> <%= e.getEventDate() %></p>
-    <p><b>Time:</b> <%= e.getStartTime() %> - <%= e.getEndTime() %></p>
-    <p><b>Cost:</b> ₹<%= e.getCost() %></p>
+            <h2 class="fw-bold"><%= event.getEventName() %></h2>
+            <p class="text-muted">📍 <%= event.getLocation() %></p>
 
-    <p><b>Description:</b></p>
-    <p><%= e.getDescription() %></p>
+            <div class="badge badge-category">
+                <%= event.getCategory() %>
+            </div>
 
-    <div class="mt-3 d-flex justify-content-between">
-        <a href="OrganizerDashboard.jsp" class="btn btn-secondary">Back</a>
-        <a href="EditEvent?eid=<%= e.getEventId() %>" class="btn btn-warning">Edit Event</a>
+            <p class="mt-3"><b>Date:</b> <%= event.getEventDate() %></p>
+
+            <p class="mt-2"><b>Price:</b> 
+                <span class="price">₹ <%= event.getCost() %></span>
+            </p>
+
+            <p class="mt-3"><%= event.getDescription() %></p>
+
+            <hr>
+
+            <% if(loggedIn && "customer".equalsIgnoreCase(user.getRole())) { %>
+
+            <form action="BookEventServlet" method="post" class="mt-3">
+
+                <input type="hidden" name="eventId" value="<%= eventId %>">
+
+                <label class="form-label">Select Tickets</label>
+                <input type="number" name="tickets" value="1" min="1" 
+                       class="form-control" required>
+
+                <button class="btn btn-modern w-100 mt-3">
+                    Book Now
+                </button>
+
+            </form>
+
+            <% } else { %>
+
+            <div class="alert alert-warning mt-3">
+                Please login as customer to book this event.
+            </div>
+
+            <a href="Login.jsp" class="btn btn-dark w-100">Login</a>
+
+            <% } %>
+
+        </div>
     </div>
 
 </div>
+
+<script>
+<% if(request.getParameter("success") != null) { %>
+    Swal.fire({
+        icon: "success",
+        title: "Booking Successful!",
+        text: "Redirecting to payment...",
+        timer: 2000,
+        showConfirmButton: false
+    });
+<% } %>
+</script>
 
 </body>
 </html>

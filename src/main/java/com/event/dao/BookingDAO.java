@@ -1,5 +1,7 @@
 package com.event.dao;
 
-public interface BookingDAO {
+import com.event.dto.Booking;
 
+public interface BookingDAO {
+	 int createBooking(Booking booking);
 }
